@@ -10,7 +10,7 @@ from rumorDataset import RumorStanceDataset
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
 from copy import copy
-from time import process_time
+from time import process_time, time
 import json
 import logging
 
@@ -35,6 +35,8 @@ parser.add_argument('--need_stance', type=int, default='1',\
 # dataset parameters
 parser.add_argument('--data_path', type=str, default='../datasets/semeval2017-task8/',\
                     help='path to training dataset, default: ../datasets/semeval2017-task8/')
+parser.add_argument('--dataset_random_seed', type=int, default=925,\
+                    help='random seed for dataset split, fix dataset partition for each train, default: 925')
 # train parameters
 parser.add_argument('--optimizer', type=str, default='AdamW',\
                     help='set optimizer type in [SGD/Adam/AdamW...], default: AdamW')
@@ -69,6 +71,7 @@ def main():
     print('preparing data...', end='', flush=True)
     tokenizer = BertTokenizer.from_pretrained(args.bert_path)
 
+    torch.manual_seed(args.dataset_random_seed)
     if 'PHEME' in args.data_path:
         dataset = RumorStanceDataset(args.data_path, 'all', tokenizer=tokenizer)
         train_size = dataset.__len__() // 10 * 8
@@ -94,6 +97,7 @@ def main():
         test_loader = DataLoader(test_set, shuffle=True, collate_fn=RumorStanceDataset.collate_fn)
         rumor_category = dataset.rumor_category
         stance_category = dataset.stance_category
+    torch.manual_seed(time())
     print('done.', flush=True)
 
     # 选定实验设备
